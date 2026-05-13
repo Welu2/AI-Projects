@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 # 1. Set up the title of your website
 st.title("🌐 My AI Language Translator")
@@ -11,17 +11,24 @@ user_input = st.text_input("Enter your text here:", "I love learning AI!")
 # 3. Load the AI model
 @st.cache_resource
 def load_translation_model():
-    return pipeline("text-generation", model="Atnafu/English-Amharic-MT")
+    model_name = "Atnafu/English-Amharic-MT"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    return tokenizer, model
 
-translator = load_translation_model()
+tokenizer, model = load_translation_model()
 
-# 4. Create a button to trigger the AI
-if st.button("Translate"):
+if st.button("Translate to Amharic"):
     with st.spinner("Translating..."):
-        translation = translator(user_input)
-        translated_text = translation[0]['translation_text']
-        st.success(f"Amharic Translation: {translated_text}")
+        # Convert text to model inputs
+        inputs = tokenizer(user_input, return_tensors="pt", padding=True)
+        
+        # Generate translation tokens
+        generated_tokens = model.generate(**inputs)
+        
+        # Convert tokens back to readable Amharic string
+        result = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+        
+        st.success(f"Amharic Translation: {result}")
 
-
-
-#day3 :)
+#day 5 :)

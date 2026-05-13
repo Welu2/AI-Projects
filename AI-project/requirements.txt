@@ -2,3 +2,5 @@ streamlit
 transformers
 pipeline
 torch
+sentencepiece
+protobuf
