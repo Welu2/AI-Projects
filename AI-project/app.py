@@ -2,28 +2,26 @@ import streamlit as st
 from transformers import pipeline
 
 # 1. Set up the title of your website
-st.title("🎬 My First AI Sentiment Web App")
-st.write("Type a sentence below to see if the AI thinks it is Happy or Sad!")
+st.title("🌐 My AI Language Translator")
+st.write("Type a sentence in English to translate it into Amharic!")
 
 # 2. Create a text input box for the user
 user_input = st.text_input("Enter your text here:", "I love learning AI!")
 
 # 3. Load the AI model
 @st.cache_resource
-def load_model():
-    return pipeline("sentiment-analysis")
+def load_translation_model():
+    return pipeline("text-generation", model="Atnafu/English-Amharic-MT")
 
-classifier = load_model()
+translator = load_translation_model()
 
 # 4. Create a button to trigger the AI
-if st.button("Analyze Sentiment"):
-    result = classifier(user_input)
-    label = result[0]['label']
-    score = result[0]['score']
-    
-    # Show the result on screen
-    st.success(f"Result: {label} (Confidence: {score:.2%})")
-    
+if st.button("Translate"):
+    with st.spinner("Translating..."):
+        translation = translator(user_input)
+        translated_text = translation[0]['translation_text']
+        st.success(f"Amharic Translation: {translated_text}")
+
 
 
 #day3 :)
