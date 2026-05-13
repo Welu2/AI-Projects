@@ -1,34 +1,18 @@
+import os
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from dotenv import load_dotenv
 
-# 1. Set up the title of your website
-st.title("🌐 My AI Language Translator")
-st.write("Type a sentence in English to translate it into Amharic!")
+# 1. Load hidden configurations from the .env file
+load_dotenv()
 
-# 2. Create a text input box for the user
-user_input = st.text_input("Enter your text here:", "I love learning AI!")
+st.title("🔐 Secure AI Vault App")
 
-# 3. Load the AI model
-@st.cache_resource
-def load_translation_model():
-    model_name = "Atnafu/English-Amharic-MT"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    return tokenizer, model
+# 2. Safely extract the secret key without typing it out in code
+secret_key = os.getenv("MY_SECRET_AI_KEY")
 
-tokenizer, model = load_translation_model()
-
-if st.button("Translate to Amharic"):
-    with st.spinner("Translating..."):
-        # Convert text to model inputs
-        inputs = tokenizer(user_input, return_tensors="pt", padding=True)
-        
-        # Generate translation tokens
-        generated_tokens = model.generate(**inputs)
-        
-        # Convert tokens back to readable Amharic string
-        result = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
-        
-        st.success(f"Amharic Translation: {result}")
-
-#day 5 :)
+if st.button("Check Infrastructure Security"):
+    if secret_key:
+        st.success("🔒 System Secure: Environment variable loaded successfully!")
+        st.info(f"Retrieved Key: {secret_key}")
+    else:
+        st.error("🚨 System Vulnerable: Secret key missing or exposed!")
