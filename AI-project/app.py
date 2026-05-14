@@ -1,18 +1,31 @@
+import logging
 import os
 import streamlit as st
-from dotenv import load_dotenv
 
-# 1. Load hidden configurations from the .env file
-load_dotenv()
+# 1. Configure the logging system to save messages to a file
+logging.basicConfig(
+    filename="platform_activity.log",
+    level=logging.INFO,
+    format="%(asctime)s - [%(levelname)s] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
-st.title("🔐 Secure AI Vault App")
+st.title("📊 AI Platform Monitoring App")
+st.write("Type a query below. Every single button click is tracked securely.")
 
-# 2. Safely extract the secret key without typing it out in code
-secret_key = os.getenv("MY_SECRET_AI_KEY")
+user_query = st.text_input("Enter a test query:", "Hello AI Infrastructure!")
 
-if st.button("Check Infrastructure Security"):
-    if secret_key:
-        st.success("🔒 System Secure: Environment variable loaded successfully!")
-        st.info(f"Retrieved Key: {secret_key}")
+# 2. Track user actions and system status
+if st.button("Submit Query to Platform"):
+    if user_query.strip() == "":
+        st.error("Empty input detected.")
+        logging.warning("User attempted to submit an empty query.")
     else:
-        st.error("🚨 System Vulnerable: Secret key missing or exposed!")
+        st.success(f"Query processed: '{user_query}'")
+        # Record a successful platform interaction
+        logging.info(f"Successfully processed query of length: {len(user_query)}")
+
+# 3. Simulate an unexpected platform error for testing
+if st.button("Simulate Infrastructure Error 🚨"):
+    st.error("Database connection lost! (Simulated)")
+    logging.error("CRITICAL: Failed to connect to backend database cluster.")
