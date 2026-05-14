@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 from openai import OpenAI
 import ollama
 
@@ -8,15 +7,17 @@ st.write("This app communicates directly with the LLM running on your local hard
 
 user_prompt = st.text_area("Ask your private AI something:", "Write a short poem about a programmer.")
 
-# Check if the app is running in the cloud or locally
-IS_DEPLOYED = os.environ.get("STREAMLIT_RUNTIME_ENVIRONMENT") == "server" or "STREAMLIT_SERVER_PORT" in os.environ
+# Safely check for cloud secrets without throwing an error if the file is missing locally
+try:
+    IS_DEPLOYED = "GROQ_API_KEY" in st.secrets
+except st.errors.StreamlitSecretNotFoundError:
+    IS_DEPLOYED = False
 
 if st.button("Generate Response"):
     with st.spinner("Processing..."):
         try:
             if IS_DEPLOYED:
-                # Cloud Mode: Uses an external API provider hosting open models
-                # Ensure you add GROQ_API_KEY to your deployment secrets settings
+                # Cloud Mode: Uses Groq's high-speed cloud endpoint
                 client = OpenAI(
                     base_url="groq.com",
                     api_key=st.secrets["GROQ_API_KEY"]
@@ -27,7 +28,7 @@ if st.button("Generate Response"):
                 )
                 st.write(response.choices[0].message.content)
             else:
-                # Local Mode: Uses your laptop's background Ollama service
+                # Local Mode: Communicates with your laptop's Ollama engine
                 response = ollama.chat(model='llama3.2:1b', messages=[
                     {'role': 'user', 'content': user_prompt}
                 ])
