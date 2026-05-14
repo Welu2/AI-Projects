@@ -1,7 +1,2 @@
-streamlit
-transformers
-torch
-torchvision
-sentencepiece
-protobuf
-python-dotenv
+ollama==0.6.2
+streamlit==1.53.1

@@ -1,31 +1,25 @@
-import logging
-import os
 import streamlit as st
+import ollama
 
-# 1. Configure the logging system to save messages to a file
-logging.basicConfig(
-    filename="platform_activity.log",
-    level=logging.INFO,
-    format="%(asctime)s - [%(levelname)s] - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+st.title("🦙 My Private Local AI Engine")
+st.write("This app communicates directly with the LLM running on your local hardware.")
 
-st.title("📊 AI Platform Monitoring App")
-st.write("Type a query below. Every single button click is tracked securely.")
+# 1. Capture user prompt input
+user_prompt = st.text_area("Ask your private AI something:", "Write a short poem about a programmer.")
 
-user_query = st.text_input("Enter a test query:", "Hello AI Infrastructure!")
-
-# 2. Track user actions and system status
-if st.button("Submit Query to Platform"):
-    if user_query.strip() == "":
-        st.error("Empty input detected.")
-        logging.warning("User attempted to submit an empty query.")
-    else:
-        st.success(f"Query processed: '{user_query}'")
-        # Record a successful platform interaction
-        logging.info(f"Successfully processed query of length: {len(user_query)}")
-
-# 3. Simulate an unexpected platform error for testing
-if st.button("Simulate Infrastructure Error 🚨"):
-    st.error("Database connection lost! (Simulated)")
-    logging.error("CRITICAL: Failed to connect to backend database cluster.")
+# 2. Trigger the local model generation
+if st.button("Generate Response"):
+    with st.spinner("Processing locally on your device..."):
+        try:
+            # Send the text directly to your background Ollama engine
+            response = ollama.chat(model='llama3.2:1b', messages=[
+                {
+                    'role': 'user',
+                    'content': user_prompt,
+                },
+            ])
+            # Display the generated content
+            st.success("Generation Complete!")
+            st.write(response['message']['content'])
+        except Exception as e:
+            st.error(f"Failed to connect to local AI server: {e}")
