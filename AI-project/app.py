@@ -23,7 +23,7 @@ if st.button("Generate Response"):
                     api_key=st.secrets["GROQ_API_KEY"]
                 )
                 response = client.chat.completions.create(
-                    model="llama-3.2-1b-preview",
+                    model="llama-3.1-8b-instant",
                     messages=[{"role": "user", "content": user_prompt}]
                 )
                 # Fixed: Added index element mapping array 0
