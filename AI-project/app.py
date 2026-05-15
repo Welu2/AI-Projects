@@ -1,40 +1,36 @@
+import sqlite3
 import streamlit as st
-from openai import OpenAI
-import ollama
 
-st.title("🦙 My Private Local AI Engine")
-st.write("This app communicates directly with the LLM running on your local hardware.")
+# 1. Initialize the database and create a table if it doesn't exist
+conn = sqlite3.connect("platform_data.db", check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute(
+    "CREATE TABLE IF NOT EXISTS prompts (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT)"
+)
+conn.commit()
 
-user_prompt = st.text_area("Ask your private AI something:", "Write a short poem about Abay river.")
+st.title("🗄️ Local Platform Database App")
+st.write("Type something below to permanently store it in your local database.")
 
-# Safely check for cloud secrets without throwing an error if the file is missing locally
-try:
-    IS_DEPLOYED = "GROQ_API_KEY" in st.secrets
-except st.errors.StreamlitSecretNotFoundError:
-    IS_DEPLOYED = False
+# 2. Input box for new data
+new_prompt = st.text_input("Enter text to save:")
 
-if st.button("Generate Response"):
-    with st.spinner("Processing..."):
-        try:
-            if IS_DEPLOYED:
-                # Cloud Mode: Corrected Groq routing endpoint
-                client = OpenAI(
-                    base_url="https://api.groq.com/openai/v1",  # Fixed: Added accurate complete path
-                    api_key=st.secrets["GROQ_API_KEY"]
-                )
-                response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "user", "content": user_prompt}]
-                )
-                # Fixed: Added index element mapping array 0
-                st.write(response.choices[0].message.content)
-            else:
-                # Local Mode: Communicates with your laptop's Ollama engine
-                response = ollama.chat(model='llama3.2:1b', messages=[
-                    {'role': 'user', 'content': user_prompt}
-                ])
-                st.write(response['message']['content'])
+if st.button("Save to Memory Bank"):
+    if new_prompt.strip() != "":
+        # Insert the text into the database table
+        cursor.execute("INSERT INTO prompts (text) VALUES (?)", (new_prompt,))
+        conn.commit()
+        st.success(f"Successfully saved: '{new_prompt}'")
+    else:
+        st.warning("Please enter some text first.")
 
-            st.success("Generation Complete!")
-        except Exception as e:
-            st.error(f"Failed to connect to AI server: {e}")
+# 3. Fetch and display the stored history
+st.subheader("📜 Stored History Logs")
+cursor.execute("SELECT text FROM prompts ORDER BY id DESC")
+history = cursor.fetchall()
+
+if history:
+    for row in history:
+        st.text(f"• {row[0]}")
+else:
+    st.info("The database is currently empty.")
