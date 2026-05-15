@@ -1,19 +1,29 @@
+import os
 import streamlit as st
 
-# 1. Read the URL parameters to check if a monitoring system is pinging us
-query_params = st.query_params
+st.title("⚙️ Smart Environment Configurator")
+st.write("This application automatically detects its host environment and adjusts settings.")
 
-# 2. If the monitoring system asks for "/?status=check", show a clean health report
-if "status" in query_params and query_params["status"] == "check":
-    st.text("STATUS: HEALTHY")
-    st.text("DATABASE: CONNECTED")
-    st.text("AI_ENGINE: READY")
-    # Stop rendering the rest of the regular website for the monitor bot
-    st.stop()
+# 1. Look for a classic cloud variable to determine where the app is hosted
+# Streamlit Cloud automatically sets specific internal indicators when live
+is_cloud = os.environ.get("STREAMLIT_RUNTIME_VERSION") or os.environ.get("HOSTNAME")
 
-# --- Regular Web App Interface Starts Here ---
-st.title("🏥 Automated Platform Health Monitoring")
-st.write("This app includes a hidden heartbeat endpoint for automated monitoring systems.")
+# 2. Automatically toggle application behavior based on the result
+if is_cloud:
+    current_env = "PRODUCTION 🚀 (Live Cloud Server)"
+    theme_color = "red"
+    debug_mode = "DISABLED"
+else:
+    current_env = "DEVELOPMENT 💻 (Your Personal PC)"
+    theme_color = "blue"
+    debug_mode = "ENABLED"
 
-st.info("The regular user dashboard is active and running normally.")
-st.write("To simulate a platform monitoring bot, add '?status=check' to the end of your browser's URL bar.")
+# 3. Display the custom infrastructure dashboard
+st.markdown(f"### Current Environment: :{theme_color}[{current_env}]")
+
+st.json({
+    "Environment Mode": current_env,
+    "Debug Logging": debug_mode,
+    "Database Pathway": "/local/storage/db" if not is_cloud else "/cloud/secure/cluster",
+    "Security Level": "Standard Guardrails" if not is_cloud else "MAXIMUM PRODUCTION SHIELD"
+})
