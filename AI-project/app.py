@@ -1,29 +1,27 @@
-import os
 import streamlit as st
 
-st.title("⚙️ Smart Environment Configurator")
-st.write("This application automatically detects its host environment and adjusts settings.")
+st.title("🛡️ Secure Input Gatekeeper")
+st.write("This app simulates an AI gateway that validates text before sending it to a model.")
 
-# 1. Look for a classic cloud variable to determine where the app is hosted
-# Streamlit Cloud automatically sets specific internal indicators when live
-is_cloud = os.environ.get("STREAMLIT_RUNTIME_VERSION") or os.environ.get("HOSTNAME")
+# 1. User text box
+user_input = st.text_input("Enter your prompt for the AI model:")
 
-# 2. Automatically toggle application behavior based on the result
-if is_cloud:
-    current_env = "PRODUCTION 🚀 (Live Cloud Server)"
-    theme_color = "red"
-    debug_mode = "DISABLED"
-else:
-    current_env = "DEVELOPMENT 💻 (Your Personal PC)"
-    theme_color = "blue"
-    debug_mode = "ENABLED"
-
-# 3. Display the custom infrastructure dashboard
-st.markdown(f"### Current Environment: :{theme_color}[{current_env}]")
-
-st.json({
-    "Environment Mode": current_env,
-    "Debug Logging": debug_mode,
-    "Database Pathway": "/local/storage/db" if not is_cloud else "/cloud/secure/cluster",
-    "Security Level": "Standard Guardrails" if not is_cloud else "MAXIMUM PRODUCTION SHIELD"
-})
+# 2. The Validation Bouncer Check
+if st.button("Process Prompt"):
+    # Rule A: Check if it's completely empty
+    if len(user_input.strip()) == 0:
+        st.error("❌ Request Blocked: You cannot submit an empty prompt.")
+        
+    # Rule B: Check if the text is too long (protecting server costs)
+    elif len(user_input) > 50:
+        st.error(f"❌ Request Blocked: Prompt is too long ({len(user_input)} characters). Maximum allowed is 50.")
+        st.warning("This keeps our server bills low and prevents system crashes!")
+        
+    # Rule C: Check for forbidden words (basic safety guardrail)
+    elif "hack" in user_input.lower() or "bypass" in user_input.lower():
+        st.error("🚨 Security Alert: Malicious keyword detected! Access denied.")
+        
+    # Success: The input passed all tests
+    else:
+        st.success("✅ Request Approved! Sending clean data to the AI engine.")
+        st.info(f"Verified Prompt: '{user_input}'")
