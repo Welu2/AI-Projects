@@ -1,36 +1,27 @@
-import sqlite3
 import streamlit as st
+import time
 
-# 1. Initialize the database and create a table if it doesn't exist
-conn = sqlite3.connect("platform_data.db", check_same_thread=False)
-cursor = conn.cursor()
-cursor.execute(
-    "CREATE TABLE IF NOT EXISTS prompts (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT)"
-)
-conn.commit()
+st.title("⚡ High-Speed Platform Caching")
+st.write("See how platform engineers use memory tricks to speed up slow AI systems.")
 
-st.title("🗄️ Local Platform Database App")
-st.write("Type something below to permanently store it in your local database.")
+# 1. This function simulates a slow, heavy AI computation
+@st.cache_data
+def heavy_ai_calculation(user_number):
+    # Simulate a 5-second wait time (like a massive AI model thinking)
+    time.sleep(5)
+    return user_number * 100
 
-# 2. Input box for new data
-new_prompt = st.text_input("Enter text to save:")
+number_input = st.number_input("Select a configuration number:", min_value=1, max_value=10)
 
-if st.button("Save to Memory Bank"):
-    if new_prompt.strip() != "":
-        # Insert the text into the database table
-        cursor.execute("INSERT INTO prompts (text) VALUES (?)", (new_prompt,))
-        conn.commit()
-        st.success(f"Successfully saved: '{new_prompt}'")
-    else:
-        st.warning("Please enter some text first.")
-
-# 3. Fetch and display the stored history
-st.subheader("📜 Stored History Logs")
-cursor.execute("SELECT text FROM prompts ORDER BY id DESC")
-history = cursor.fetchall()
-
-if history:
-    for row in history:
-        st.text(f"• {row[0]}")
-else:
-    st.info("The database is currently empty.")
+# 2. Run the calculation and track the time it takes
+if st.button("Run Heavy Computation"):
+    start_time = time.time()
+    
+    with st.spinner("Processing heavy calculations..."):
+        result = heavy_ai_calculation(number_input)
+        
+    end_time = time.time()
+    duration = end_time - start_time
+    
+    st.success(f"Output Result: {result}")
+    st.info(f"⏱️ Execution Time: {duration:.2f} seconds")
