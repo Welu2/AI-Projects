@@ -1,30 +1,30 @@
 import streamlit as st
 import time
 
-st.title("🚨 Automated Infrastructure Alerting")
-st.write("Simulate a cloud server failure and watch the automated alerting engine trigger.")
+st.title("⏳ AI Platform Rate Limiter")
+st.write("Prevent users from spamming our infrastructure resources.")
 
-# 1. This function simulates sending an alert to an engineering team
-def send_system_alert(service_name, error_message):
-    # In a real system, this would send an SMS, email, or Slack message
-    alert_time = time.strftime("%H:%M:%S")
-    notification = f"⚠️ [ALERT @ {alert_time}] System: '{service_name}' failed! Reason: {error_message}"
-    return notification
+# 1. Initialize a counter in the app memory to track click times
+if "request_history" not in st.session_state:
+    st.session_state.request_history = []
 
-# 2. Interactive buttons to trigger different severities
-st.subheader("Trigger Test Alerts")
+# 2. Strict Platform Rules (You will tweak these!)
+MAX_REQUESTS = 3          # Maximum number of allowed clicks
+TIME_WINDOW = 10          # Time window in seconds
 
-if st.button("Simulate AI Model Crash"):
-    with st.spinner("Processing error log..."):
-        time.sleep(1)
-        # Call the alerting function
-        alert_result = send_system_alert("Llama-3-Model-Server", "Out of GPU Memory (OOM)")
-        st.error("🚨 Critical Alert Dispatched to Team Chat!")
-        st.code(alert_result)
-
-if st.button("Simulate Database Timeout"):
-    with st.spinner("Processing error log..."):
-        time.sleep(1)
-        alert_result = send_system_alert("User-Database-Cluster", "Connection timed out after 30 seconds")
-        st.warning("⚠️ Warning Alert Sent to On-Call Engineer.")
-        st.code(alert_result)
+if st.button("Call Heavy AI Model 🚀"):
+    current_time = time.time()
+    
+    # Clean up history: remove clicks that happened a long time ago
+    st.session_state.request_history = [
+        t for t in st.session_state.request_history if current_time - t < TIME_WINDOW
+    ]
+    
+    # 3. Check if the user has exceeded their limits
+    if len(st.session_state.request_history) >= MAX_REQUESTS:
+        st.error("🚨 Rate Limit Exceeded! You are making requests too fast.")
+        st.warning(f"Please wait a few seconds before trying again. Rule: Max {MAX_REQUESTS} requests per {TIME_WINDOW}s.")
+    else:
+        # Record the current click time
+        st.session_state.request_history.append(current_time)
+        st.success(f"✅ Request Processed! (Requests used: {len(st.session_state.request_history)}/{MAX_REQUESTS})")
