@@ -1,0 +1,5 @@
+platform_settings:
+  app_name: "AI Engine Control Hub"
+  max_tokens: 150
+  maintenance_mode: False
+  api_timeout_seconds: 30

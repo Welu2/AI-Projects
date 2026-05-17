@@ -1,24 +1,22 @@
 import streamlit as st
+import yaml
 
-st.title("🎛️ AI Platform Feature Flag Dashboard")
-st.write("Control which infrastructure features are live for users in real-time.")
+# 1. Open and safely read the external configuration file
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
 
-# 1. Infrastructure Admin Panel (Simulating a control room)
-st.sidebar.header("🛠️ Platform Admin Controls")
-new_engine_enabled = st.sidebar.toggle("Enable Next-Gen Llama 4 Engine", value=false)
+settings = config["platform_settings"]
 
-# 2. Main Application Logic
-st.subheader("User Application Area")
+# 2. Dynamically build the dashboard using the file settings
+st.title(f"📊 {settings['app_name']}")
+st.write("This control panel reads its structural boundaries from an external YAML file.")
 
-if new_engine_enabled:
-    st.info("🚀 Current Active Infrastructure: **Next-Gen Llama 4 Cluster**")
-    st.markdown("Status: :green[RUNNING - Beta testing group active]")
-    
-    if st.button("Generate Text"):
-        st.success("🤖 Llama 4 Response: 'I am a highly advanced AI system operating on the new beta cluster.'")
+st.subheader("Active System Properties")
+st.metric(label="Max Allowed Generation Tokens", value=settings["max_tokens"])
+st.metric(label="API Connection Timeout", value=f"{settings['api_timeout_seconds']} seconds")
+
+# 3. Check and display system maintenance status
+if settings["maintenance_mode"]:
+    st.error("🚨 SYSTEM STATUS: OFFLINE FOR MAINTENANCE. Please check back later.")
 else:
-    st.info("💼 Current Active Infrastructure: **Legacy Llama 3 Cluster**")
-    st.markdown("Status: :blue[RUNNING - Standard production stable]")
-    
-    if st.button("Generate Text"):
-        st.success("🤖 Llama 3 Response: 'Hello! I am the standard production AI model.'")
+    st.success("✅ SYSTEM STATUS: ONLINE & HEALTHY. Core infrastructure clusters active.")

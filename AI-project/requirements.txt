@@ -2,3 +2,4 @@ ollama==0.6.2
 streamlit==1.53.1
 openai
 flake8
+yamal
