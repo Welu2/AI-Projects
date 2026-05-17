@@ -1,30 +1,24 @@
 import streamlit as st
-import time
 
-st.title("⏳ AI Platform Rate Limiter")
-st.write("Prevent users from spamming our infrastructure resources.")
+st.title("🎛️ AI Platform Feature Flag Dashboard")
+st.write("Control which infrastructure features are live for users in real-time.")
 
-# 1. Initialize a counter in the app memory to track click times
-if "request_history" not in st.session_state:
-    st.session_state.request_history = []
+# 1. Infrastructure Admin Panel (Simulating a control room)
+st.sidebar.header("🛠️ Platform Admin Controls")
+new_engine_enabled = st.sidebar.toggle("Enable Next-Gen Llama 4 Engine", value=false)
 
-# 2. Strict Platform Rules (You will tweak these!)
-MAX_REQUESTS = 3          # Maximum number of allowed clicks
-TIME_WINDOW = 10          # Time window in seconds
+# 2. Main Application Logic
+st.subheader("User Application Area")
 
-if st.button("Call Heavy AI Model 🚀"):
-    current_time = time.time()
+if new_engine_enabled:
+    st.info("🚀 Current Active Infrastructure: **Next-Gen Llama 4 Cluster**")
+    st.markdown("Status: :green[RUNNING - Beta testing group active]")
     
-    # Clean up history: remove clicks that happened a long time ago
-    st.session_state.request_history = [
-        t for t in st.session_state.request_history if current_time - t < TIME_WINDOW
-    ]
+    if st.button("Generate Text"):
+        st.success("🤖 Llama 4 Response: 'I am a highly advanced AI system operating on the new beta cluster.'")
+else:
+    st.info("💼 Current Active Infrastructure: **Legacy Llama 3 Cluster**")
+    st.markdown("Status: :blue[RUNNING - Standard production stable]")
     
-    # 3. Check if the user has exceeded their limits
-    if len(st.session_state.request_history) >= MAX_REQUESTS:
-        st.error("🚨 Rate Limit Exceeded! You are making requests too fast.")
-        st.warning(f"Please wait a few seconds before trying again. Rule: Max {MAX_REQUESTS} requests per {TIME_WINDOW}s.")
-    else:
-        # Record the current click time
-        st.session_state.request_history.append(current_time)
-        st.success(f"✅ Request Processed! (Requests used: {len(st.session_state.request_history)}/{MAX_REQUESTS})")
+    if st.button("Generate Text"):
+        st.success("🤖 Llama 3 Response: 'Hello! I am the standard production AI model.'")
