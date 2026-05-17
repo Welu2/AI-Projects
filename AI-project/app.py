@@ -1,22 +1,35 @@
 import streamlit as st
-import yaml
+import random
 
-# 1. Open and safely read the external configuration file
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
+st.title("🔌 Infrastructure Circuit Breaker")
+st.write("Simulate a primary system crash and watch the app automatically switch to a fallback system.")
 
-settings = config["platform_settings"]
+# 1. Platform Admin Switch to simulate a live server crash
+st.sidebar.header("🛠️ Infrastructure Control Room")
+simulate_server_outage = st.sidebar.toggle("Simulate Primary Cloud Server Crash", value=False)
 
-# 2. Dynamically build the dashboard using the file settings
-st.title(f"📊 {settings['app_name']}")
-st.write("This control panel reads its structural boundaries from an external YAML file.")
+# 2. Main Application Logic Function
+def process_ai_request():
+    if simulate_server_outage:
+        # This simulates a broken connection to a premium server
+        raise ConnectionError("Could not reach premium cluster node.")
+    else:
+        return "✨ Premium Response: Processing data using ultra-fast Premium infrastructure!"
 
-st.subheader("Active System Properties")
-st.metric(label="Max Allowed Generation Tokens", value=settings["max_tokens"])
-st.metric(label="API Connection Timeout", value=f"{settings['api_timeout_seconds']} seconds")
-
-# 3. Check and display system maintenance status
-if settings["maintenance_mode"]:
-    st.error("🚨 SYSTEM STATUS: OFFLINE FOR MAINTENANCE. Please check back later.")
-else:
-    st.success("✅ SYSTEM STATUS: ONLINE & HEALTHY. Core infrastructure clusters active.")
+# 3. Interactive User Execution Block
+if st.button("Execute AI Task"):
+    try:
+        with st.spinner("Contacting primary infrastructure..."):
+            # Attempt to run the primary system
+            response = process_ai_request()
+            st.success(response)
+            st.info("Status: Operating on Primary Cloud Node.")
+            
+    except ConnectionError as error:
+        # 4. Graceful Degradation: The fallback kicks in automatically
+        st.warning(f"🚨 Primary system failure caught: {error}")
+        st.error("🔄 Circuit Breaker Tripped! Diverting traffic to Backup Node...")
+        
+        # Fallback operation
+        st.info("📉 Fallback Active: Running on slower, offline local cache.")
+        st.success("🤖 Backup Response: Running task with reduced performance, but application stayed online!")
