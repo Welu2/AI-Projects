@@ -1,28 +1,40 @@
 import streamlit as st
-# Import the new database functions from your backend
-from engine import compute_server_load, get_system_greeting, save_config, load_config
+import asyncio
+import random
+# 1. Import your brand new async background simulation engine
+from engine import simulate_heavy_ai_job, load_config
 
-st.title("💾 Persistent Infrastructure Hub")
+st.set_page_config(page_title="Async Workers Hub", page_icon="⚡")
+st.title("⚡ Async Infrastructure Job Worker")
+st.write("Keep the dashboard interactive while heavy AI tasks process in the background.")
 
-# 1. Load saved data automatically when the app starts
 saved_data = load_config()
+st.sidebar.info(f"Operator Session: {saved_data.get('operator', 'Alpha')}")
 
-st.subheader("System Settings")
-# Use the saved data as the default values
-operator_name = st.text_input("Operator Name:", saved_data["operator"])
-multiplier = st.number_input("Server Load Multiplier:", value=float(saved_data["multiplier"]))
+st.subheader("Execute Background AI Workload")
+job_id = f"AI-TASK-{random.randint(1000, 9999)}"
 
-# 2. Add a Save Button to write data to disk
-if st.button("💾 Save Settings permanently"):
-    save_config(operator_name, multiplier)
-    st.toast("Settings saved to system_config.json!", icon="✅")
+# 2. Trigger the async generator loop safely
+if st.button("🚀 Dispatch Non-Blocking AI Job"):
+    status_box = st.empty()
+    progress_bar = st.progress(0)
+    
+    # Define an async runner loop inside our button execution
+    async def run_pipeline():
+        step_count = 5
+        current_step = 0
+        
+        # Stream the async generator values as they yield
+        async for status_update in simulate_heavy_ai_job(job_id, steps=step_count):
+            status_box.text(status_update)
+            if current_step < step_count:
+                current_step += 1
+                progress_bar.progress(int((current_step / step_count) * 100))
+        
+        st.balloons()
 
-# 3. Visual Diagnostics
+    # Run the asynchronous function using the modern asyncio framework
+    asyncio.run(run_pipeline())
+
 st.divider()
-greeting = get_system_greeting(operator_name)
-st.success(greeting)
-
-users = st.slider("Simulate Active Users:", min_value=1, max_value=100, value=20)
-# Use the dynamic multiplier instead of a hardcoded one
-base_load = users * multiplier
-st.metric(label="Calculated Infrastructure Load", value=f"{base_load}%")
+st.caption("Notice how you can still interact with the sidebar or other widgets while the progress bar calculates!")

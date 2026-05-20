@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -30,3 +31,11 @@ def compute_server_load(multiplier):
     base_load = random.uniform(10.0, 30.0)
     return round(base_load * multiplier, 2)
 
+async def simulate_heavy_ai_job(job_id: str, steps: int = 5):
+    """Simulates a heavy, non-blocking background AI pipeline job."""
+    for i in range(1, steps + 1):
+        # Instead of time.sleep() which freezes the app, 
+        # asyncio.sleep allows other tasks to run simultaneously
+        await asyncio.sleep(0.8) 
+        yield f"Job {job_id}: Processing step {i}/{steps}..."
+    yield f"Job {job_id}: Pipeline execution complete! 🎉"
