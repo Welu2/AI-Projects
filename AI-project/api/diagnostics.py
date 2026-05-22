@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from datetime import datetime
+from api.models import AIInferenceRequest  
+
 
 # 1. Create an isolated router for infrastructure metrics
 router = APIRouter(
@@ -23,4 +25,18 @@ async def get_cluster_metrics():
         "gpu_vram_usage_gb": 4.2,
         "network_throughput_mbps": 850.5,
         "cluster_health_score": 0.99
+    }
+@router.post("/inference", status_code=status.HTTP_201_CREATED)
+async def dispatch_inference_job(payload: AIInferenceRequest):
+    """Processes incoming AI job payloads after strict Pydantic parsing."""
+    # If the payload passes the Pydantic check, it arrives safely here as a Python object
+    return {
+        "status": "QUEUED",
+        "assigned_node": "GPU-CLUSTER-EPSILON",
+        "received_at": datetime.utcnow().isoformat(),
+        "parsed_configuration": {
+            "model": payload.model_name,
+            "tokens_allocated": payload.max_tokens,
+            "sampling_temp": payload.temperature
+        }
     }
