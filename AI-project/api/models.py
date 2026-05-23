@@ -1,5 +1,9 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional
+from sqlalchemy import Column, Integer, String, Float, Boolean
+from database import Base
+
+
 
 class AIInferenceRequest(BaseModel):
     """Pydantic data validation model acting as a gateway security check."""
@@ -16,3 +20,16 @@ class AIInferenceRequest(BaseModel):
         if v.lower() not in allowed:
             raise ValueError(f"Model '{v}' is unauthorized. Allowed: {allowed}")
         return v.lower()
+
+
+# Define the physical database table structure
+class DBInferenceJob(Base):
+    """SQLAlchemy model representing the 'inference_jobs' table in SQL."""
+    __tablename__ = "inference_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_name = Column(String, index=True)
+    prompt = Column(String)
+    temperature = Column(Float)
+    max_tokens = Column(Integer)
+    is_completed = Column(Boolean, default=False)

@@ -1,6 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends 
 from datetime import datetime
-from api.models import AIInferenceRequest  
+from api.models import AIInferenceRequest  , DBInferenceJob
+
+from sqlalchemy.orm import Session
+from database import get_db, engine, Base
+  # Import our DB model
+
+# 2. Create the physical tables when the app runs (runs on initialization)
+Base.metadata.create_all(bind=engine)
 
 
 # 1. Create an isolated router for infrastructure metrics
@@ -38,5 +45,34 @@ async def dispatch_inference_job(payload: AIInferenceRequest):
             "model": payload.model_name,
             "tokens_allocated": payload.max_tokens,
             "sampling_temp": payload.temperature
+        }
+    }
+
+
+# 3. Update the POST route to use the database dependency
+@router.post("/inference", status_code=status.HTTP_201_CREATED)
+async def dispatch_inference_job(payload: AIInferenceRequest, db: Session = Depends(get_db)):
+    """Validates data via Pydantic, converts it, and saves it permanently to SQLite."""
+    
+    # Create an instance of our SQLAlchemy DB model using the payload data
+    new_job = DBInferenceJob(
+        model_name=payload.model_name,
+        prompt=payload.prompt,
+        temperature=payload.temperature,
+        max_tokens=payload.max_tokens
+    )
+    
+    # Commit the transaction to the database
+    db.add(new_job)
+    db.commit()
+    db.refresh(new_job) # Fetch the generated auto-increment id from SQL
+    
+    return {
+        "status": "DATABASE_PERSISTED",
+        "job_id": new_job.id,
+        "saved_record": {
+            "model": new_job.model_name,
+            "prompt_length": len(new_job.prompt),
+            "completed_flag": new_job.is_completed
         }
     }
