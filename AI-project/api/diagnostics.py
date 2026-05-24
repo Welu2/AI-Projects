@@ -76,3 +76,33 @@ async def dispatch_inference_job(payload: AIInferenceRequest, db: Session = Depe
             "completed_flag": new_job.is_completed
         }
     }
+
+# Ensure DBInferenceJob is imported at the top (already done on Day 27)
+
+@router.get("/jobs", status_code=status.HTTP_200_OK)
+async def get_all_inference_jobs(limit: int = 10, db: Session = Depends(get_db)):
+    """Fetches the latest execution logs from the infrastructure database."""
+    # query(DBInferenceJob) tells SQLAlchemy which table to scan
+    # .limit() ensures our server doesn't crash if the database has millions of rows
+    jobs = db.query(DBInferenceJob).limit(limit).all()
+    return {
+        "total_fetched": len(jobs),
+        "cluster_jobs": jobs
+    }
+@router.get("/jobs/{job_id}", status_code=status.HTTP_200_OK)
+async def get_single_job(job_id: int, db: Session = Depends(get_db)):
+    """Retrieves a single target infrastructure job record by its Primary Key."""
+    # .filter() acts as the SQL 'WHERE id = job_id' clause
+    job = db.query(DBInferenceJob).filter(DBInferenceJob.id == job_id).first()
+    
+    # Error Validation Bouncer: If the client asks for an ID that doesn't exist, block them!
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Inference job with ID {job_id} was not found on this cluster node."
+        )
+        
+    return {
+        "search_status": "FOUND",
+        "job_details": job
+    }
