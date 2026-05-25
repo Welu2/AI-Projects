@@ -106,3 +106,32 @@ async def get_single_job(job_id: int, db: Session = Depends(get_db)):
         "search_status": "FOUND",
         "job_details": job
     }
+
+@router.patch("/jobs/{job_id}/status", status_code=status.HTTP_200_OK)
+async def update_job_completion_status(job_id: int, completed: bool, db: Session = Depends(get_db)):
+    """Updates the execution state of an ongoing inference job inside SQLite."""
+    # 1. Look up the record first to ensure it exists
+    job = db.query(DBInferenceJob).filter(DBInferenceJob.id == job_id).first()
+    
+    # 2. Re-use your error validation bouncer from yesterday
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Cannot update state. Job ID {job_id} does not exist."
+        )
+        
+    # 3. Modify the target column flag using the incoming query parameter
+    job.is_completed = completed
+    
+    # 4. Commit and save the state change permanently
+    db.commit()
+    db.refresh(job)
+    
+    return {
+        "update_status": "SUCCESS",
+        "job_id": job.id,
+        "new_state": {
+            "model_assigned": job.model_name,
+            "is_completed": job.is_completed
+        }
+    }
