@@ -135,3 +135,28 @@ async def update_job_completion_status(job_id: int, completed: bool, db: Session
             "is_completed": job.is_completed
         }
     }
+@router.delete("/jobs/{job_id}", status_code=status.HTTP_200_OK)
+async def delete_inference_job(job_id: int, db: Session = Depends(get_db)):
+    """Permanently purges a specific inference log record from the infrastructure cluster."""
+    # 1. Look up the record first to ensure it exists before attempting a delete
+    job = db.query(DBInferenceJob).filter(DBInferenceJob.id == job_id).first()
+    
+    # 2. Re-use your error validation bouncer to prevent client mistakes
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Purge failed. Inference job ID {job_id} does not exist in cluster registry."
+        )
+        
+    # 3. Use the SQLAlchemy session to delete the row object from the database table
+    db.delete(job)
+    
+    # 4. Commit the transaction to save changes permanently to disk
+    db.commit()
+    
+    return {
+        "operation": "PURGE",
+        "purged_job_id": job_id,
+        "cluster_status": "RESOURCE_RECLAIMED",
+        "message": f"Successfully deleted model record allocation for {job.model_name}."
+    }
