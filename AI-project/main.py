@@ -1,59 +1,60 @@
 import time
+import uuid
+import logging
+import json
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="AI Infrastructure Middleware Guard")
+app = FastAPI(title="AI Infrastructure Telemetry & Tracing")
 
-# ------------------------------------------------------------------
-# 1. CORS GUARDRAIL CONFIGURATION
-# ------------------------------------------------------------------
-# In production, never leave this as ["*"]. Define explicit origins.
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",      # Local frontend development (React/Next.js)
-    "https://streamlit.io",       # Trusted Streamlit cloud domain
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],  # Restrict allowed HTTP verbs
-    allow_headers=["Content-Type", "Authorization"],  # Restrict allowed headers
-)
+# Configure system logger to output clean text or structures
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("AI_Platform")
 
 # ------------------------------------------------------------------
-# 2. CUSTOM LOGGING & PERFORMANCE MIDDLEWARE
+# TRACING MIDDLEWARE (CORRELATION ID)
 # ------------------------------------------------------------------
 @app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
+async def add_telemetry_tracing(request: Request, call_next):
+    # Check if upstream service already passed an ID; if not, generate one
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    
+    # Store ID on request state so endpoints can access it if needed
+    request.state.request_id = request_id
+    
     start_time = time.perf_counter()
-    
-    # Pass the request down the pipeline to the endpoint
     response = await call_next(request)
+    duration = time.perf_counter() - start_time
     
-    # Calculate execution metrics
-    process_time = time.perf_counter() - start_time
+    # Pass the ID back to the client/frontend for debugging loops
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Runtime-Duration"] = f"{duration:.4f}s"
     
-    # Inject metrics into response headers for infrastructure monitoring
-    response.headers["X-Process-Time-Seconds"] = f"{process_time:.4f}"
+    # Structured JSON log payload for modern infrastructure collectors
+    log_payload = {
+        "timestamp": time.time(),
+        "request_id": request_id,
+        "method": request.method,
+        "path": request.url.path,
+        "status_code": response.status_code,
+        "duration_sec": round(duration, 4)
+    }
     
-    print(f"[INFRA LOG] Path: {request.url.path} | Latency: {process_time:.4f}s")
+    # Output as a single line JSON string
+    logger.info(json.dumps(log_payload))
     return response
 
 # ------------------------------------------------------------------
-# 3. API ENDPOINTS
+# ENDPOINTS
 # ------------------------------------------------------------------
-@app.get("/api/v1/health")
-async def health_check():
-    return {"status": "healthy", "infrastructure": "secure"}
-
-@app.post("/api/v1/inference")
-async def run_inference(payload: dict):
-    # Simulating a minor AI model inference lag
-    time.sleep(0.05) 
-    return {"status": "success", "output": "AI Engine Response"}
+@app.get("/api/v1/predict")
+async def mock_predict(request: Request):
+    # Accessing the middleware context safely inside an endpoint
+    current_id = getattr(request.state, "request_id", "unknown")
+    return {
+        "msg": "Inference completed", 
+        "tracked_by": current_id
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    # Run the ASGI server locally
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
